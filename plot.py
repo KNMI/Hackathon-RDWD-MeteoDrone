@@ -71,8 +71,8 @@ def calculate_height (air_pressure, temperature, rel_hum):
 
 	qs = get_mixing_ratio(air_pressure, kelvin_temp)
 	q = rel_hum_frac * qs
-	virtual_temperature = virtual_temperature(kelvin_temp, rel_hum_frac, air_pressure)
-	virtual_potential_temperature = getTheta(virtual_temperature, air_pressure)
+	virt_temp = virtual_temperature(kelvin_temp, rel_hum_frac, air_pressure)
+	virtual_potential_temperature = getTheta(virt_temp, air_pressure)
 	potential_temperature = getTheta(kelvin_temp, air_pressure)
 	start_pressure = 1010.75
 	start_height = 0
@@ -81,7 +81,7 @@ def calculate_height (air_pressure, temperature, rel_hum):
 		heights.append(get_height(start_height, virtual_potential_temperature[i], start_pressure, virtual_potential_temperature[i + 1], air_pressure[i]))
 		start_height = heights[-1]
 		start_pressure = air_pressure[i]
-	return heights
+	return (heights, potential_temperature)
 
 # Hard coded but should come from filename
 basetime = datetime(2017, 6, 8, 0, 0, 0, 0)
@@ -95,7 +95,7 @@ data = clean_data(data)
 time, air_pressure, temperature, rel_hum, height = data
 
 # Calulate height for data
-heights = calculate_height(air_pressure, temperature, rel_hum)
+(heights, potential_temperature) = calculate_height(air_pressure, temperature, rel_hum)
 
 # also kinda hardcoded but for now...
 for i in range(1,len(data) - 1):
