@@ -1,0 +1,35 @@
+{
+	"metadata"	: 
+		{  
+			"sensor"    : "Baloon Sensor" ,
+			"date"      : "20170612" ,
+			"location"  : "cabauw drone",
+			"producer"  : "drone hack team 201706" ,
+			"contact"   : "mark.allart@knmi.nl" ,
+			"file"      : "/MEMBERS/knmi/datatransfer/allaart/20170608.txt",
+			"machine"   : "bbc.knmi.nl",
+	 		"columns"	: [
+				{
+					"name": "Number of seconds since 00:00 UTC of the corresponding day",
+					"units": "seconds"
+				},
+				{
+					"name": "Air pressure",
+					"units": "hPa"
+				},
+				{
+					"name": "Temperature",
+					"units": "°C"
+				},
+				{
+					"name": "Relative humidity",
+					"units": "%"
+				},
+				{
+					"name": "Height",
+					"units": "Meters",
+					"comment": "From GPS sensor, not accurate"
+				}
+			]
+		}
+}
