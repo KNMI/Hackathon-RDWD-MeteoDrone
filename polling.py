@@ -16,5 +16,5 @@ def monitor( interval=50 ):
     time.sleep(interval)
 
 
-for i in range(100):
-	monitor(3)
+while True:
+	monitor(12)
