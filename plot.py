@@ -106,6 +106,7 @@ def parse_cabauw_data(data, metadata, basetime):
 
 	for observation in splitted:
 		secs_passed = int(observation[0])
+		time = np.append(time, secs_passed)
 		wind_speed_token = observation[1]
 		assert(wind_speed_token == 'ws')
 		wind_speed_10 = np.append(wind_speed_10, float(observation[2]))
@@ -219,17 +220,17 @@ def parse_cabauw_data(data, metadata, basetime):
 def preproc_and_plot(data, data_cabauw, basetime, metadata, metadata_cabauw):
 	time, air_pressure, temperature, rel_hum, height = parse_radio_data(data, metadata, basetime)
 	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
-	plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height)
+	plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height, time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c)
 
-def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height):
+def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height, time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c):
 	# Calulate height for data
 	(heights, potential_temperature) = calculate_height(air_pressure, temperature, rel_hum, 1010.75)
 	print('Height (GPS): ', height[-1])
 	print('Height (calc): ', heights[-1])
-
 	i = 1
 	plt.subplot(321)
 	plt.plot(time, air_pressure)
+	plt.plot(time_c, air_pressures_c)
 	plt.ylabel(metadata[i]['units'])
 	plt.xlabel('Time')
 	plt.title(metadata[i]['name'])
@@ -237,7 +238,13 @@ def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height):
 	i = 2
 	plt.subplot(322)
 	plt.plot(time, temperature)
-	plt.plot(time, potential_temperature)
+	plt.plot(time_c, air_temperatures_c[10])
+	plt.plot(time_c, air_temperatures_c[20])
+	plt.plot(time_c, air_temperatures_c[40])
+	plt.plot(time_c, air_temperatures_c[80])
+	plt.plot(time_c, air_temperatures_c[140])
+	plt.plot(time_c, air_temperatures_c[200])
+	# plt.plot(time, potential_temperature)
 	plt.ylabel(metadata[i]['units'])
 	plt.xlabel('Time')
 	plt.title(metadata[i]['name'])
@@ -245,6 +252,13 @@ def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height):
 	i = 3
 	plt.subplot(323)
 	plt.plot(time, rel_hum)
+	plt.plot(time_c, relative_humidities_c[10])
+	plt.plot(time_c, relative_humidities_c[20])
+	plt.plot(time_c, relative_humidities_c[40])
+	plt.plot(time_c, relative_humidities_c[80])
+	plt.plot(time_c, relative_humidities_c[140])
+	plt.plot(time_c, relative_humidities_c[200])
+
 	plt.ylabel(metadata[i]['units'])
 	plt.xlabel('Time')
 	plt.title(metadata[i]['name'])
@@ -257,7 +271,14 @@ def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height):
 	plt.xlabel('Time')
 
 	plt.subplot(325)
-	plt.plot(temperature, heights)
+	# plt.plot(temperature, heights)
+	plt.plot(air_temperatures_c[10], [10] * len(air_temperatures_c[10]))
+	plt.plot(air_temperatures_c[20], [20] * len(air_temperatures_c[10]))
+	plt.plot(air_temperatures_c[40], [40] * len(air_temperatures_c[10]))
+	plt.plot(air_temperatures_c[80], [80] * len(air_temperatures_c[10]))
+	plt.plot(air_temperatures_c[140], [140] * len(air_temperatures_c[10]))
+	plt.plot(air_temperatures_c[200], [200] * len(air_temperatures_c[10]))
+
 	plt.title('Temp/Height profile')
 	plt.ylabel('Height')
 	plt.xlabel('Temperature')
