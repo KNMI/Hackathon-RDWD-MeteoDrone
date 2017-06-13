@@ -1,0 +1,194 @@
+{
+	"metadata"	: 
+		{  
+			"sensor"    : "Baloon Sensor" ,
+			"date"      : "20170612" ,
+			"location"  : "cabauw drone",
+			"producer"  : "drone hack team 201706" ,
+			"contact"   : "mark.allart@knmi.nl" ,
+			"file"      : "/MEMBERS/knmi/datatransfer/allaart/20170608.txt",
+			"machine"   : "bbc.knmi.nl",
+	 		"columns"	: [
+				{
+					"name": "Time",
+					"units": "Fraction of day passed"
+				},
+				{
+					"name": "Wind speed token",
+					"units": "-"
+				},
+				{
+					"name": "Wind speed at 10m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind speed at 20m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind speed at 40m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind speed at 80m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind speed at 140m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind speed at 200m",
+					"units": "m/s"
+				},
+				{
+					"name": "Wind direction token",
+					"units": "-"
+				},
+				{
+					"name": "Wind direction at 10m",
+					"units": "degrees"
+				},
+				{
+					"name": "Wind direction at 20m",
+					"units": "degrees"
+				},
+				{
+					"name": "Wind direction at 40m",
+					"units": "degrees"
+				},
+				{
+					"name": "Wind direction at 80m",
+					"units": "degrees"
+				},
+				{
+					"name": "Wind direction at 140m",
+					"units": "degrees"
+				},
+				{
+					"name": "Wind direction at 200m",
+					"units": "degrees"
+				},
+				{
+					"name": "Air temperature token",
+					"units": "-"
+				},
+				{
+					"name": "Air temperature at 10m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Air temperature at 20m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Air temperature at 40m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Air temperature at 80m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Air temperature at 140m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Air temperature at 200m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature token",
+					"units": "-"
+				},
+				{
+					"name": "Dew point temperature at 10m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature at 20m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature at 40m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature at 80m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature at 140m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Dew point temperature at 200m",
+					"units": "degrees celsius"
+				},
+				{
+					"name": "Relative humidity token",
+					"units": "-"
+				},
+				{
+					"name": "Relative humidity at 10m",
+					"units": "%"
+				},
+				{
+					"name": "Relative humidity at 20m",
+					"units": "%"
+				},
+				{
+					"name": "Relative humidity at 40m",
+					"units": "%"
+				},
+				{
+					"name": "Relative humidity at 80m",
+					"units": "%"
+				},
+				{
+					"name": "Relative humidity at 140m",
+					"units": "%"
+				},
+				{
+					"name": "Relative humidity at 200m",
+					"units": "%"
+				},
+				{
+					"name": "Visibility token",
+					"units": "-"
+				},
+				{
+					"name": "Visibility at 10m",
+					"units": "meters"
+				},
+				{
+					"name": "Visibility at 20m",
+					"units": "meters"
+				},
+				{
+					"name": "Visibility at 40m",
+					"units": "meters"
+				},
+				{
+					"name": "Visibility at 80m",
+					"units": "meters"
+				},
+				{
+					"name": "Visibility at 140m",
+					"units": "meters"
+				},
+				{
+					"name": "Visibility at 200m",
+					"units": "meters"
+				},
+				{
+					"name": "Air pressure token",
+					"units": "-"
+				},
+				{
+					"name": "Air pressure at 10m",
+					"units": "hPa"
+				}
+			]
+		}
+}

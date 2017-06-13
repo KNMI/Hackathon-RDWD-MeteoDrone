@@ -29,6 +29,14 @@
 					"name": "Height",
 					"units": "Meters",
 					"comment": "From GPS sensor, not accurate"
+				},
+				{
+					"name": "Latitude",
+					"units": "Degrees"
+				},
+				{
+					"name": "Longtitude",
+					"units": "Degrees"
 				}
 			]
 		}
