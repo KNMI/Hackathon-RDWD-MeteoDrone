@@ -31,7 +31,6 @@ def get_height(z1, theta1, p1, theta2, p2):
 	# ; 5) p2: pressure at level 2 (hPa)
 	# ; outputs
 	# ; 1) height: the height of level 2 (m)
-
 	r = 287.0
 	g = 9.8
 	p21 = np.divide(p2, p1)
@@ -44,6 +43,14 @@ def get_height(z1, theta1, p1, theta2, p2):
 	result = z1 - (r/g)*(np.subtract(part1, part2))*np.log(p21)/np.log(part3)
 	return result
 
+def calculate_pressure(pressu,p1,thv1,z1,thv2,z2):
+	g = 9.8
+	cp = 1004.0
+	if thv1 == thv2:
+		RESULT = (p1 ** .286 + 1000.0 ** .286 * (g/cp) * (z1-z2)/thv1) ** (1.0 / 0.286)
+	else:
+		RESULT = (p1 ** .286 + 1000.0 ** .286 * (g/cp) * (z1-z2) * np.log(thv1/thv2) / (thv1-thv2)) ** (1.0/0.286)
+	return RESULT
 
 def calculate_height (air_pressure, temperature, rel_hum, initial_pressure): 
 	# perform conversions for functions
@@ -59,7 +66,7 @@ def calculate_height (air_pressure, temperature, rel_hum, initial_pressure):
 	start_height = 0
 	heights = [0]
 	for i in range(len(potential_temperature) - 1):
-		heights.append(get_height(start_height, virtual_potential_temperature[i], start_pressure, virtual_potential_temperature[i + 1], air_pressure[i]))
+		heights.append(get_height(start_height, virtual_potential_temperature[i], start_pressure, virtual_potential_temperature[i + 1], air_pressure[i] + (1e-5 if air_pressure[i] == start_pressure else 0)))
 		start_height = heights[-1]
 		start_pressure = air_pressure[i]
-	return (heights, potential_temperature)
+	return (heights, potential_temperature, qs, q)
