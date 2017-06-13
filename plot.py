@@ -3,7 +3,6 @@ from datetime import timedelta, datetime
 import matplotlib.pyplot as plt
 import json
 from itertools import izip_longest
-import pyqtgraph as pg
 from meteo import calculate_height
 # plotting stuff
 def filter_time(time):
