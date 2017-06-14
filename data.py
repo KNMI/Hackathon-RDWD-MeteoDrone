@@ -61,9 +61,16 @@ def parse_radio_data(data, metadata, basetime):
 
 	return (time, air_pressure, temperature, rel_hum, height)
 
+def correct_pressure(delta_z):
+	return (-1020.0 / 287.0) * (9.8 / 293.0) * delta_z
+
+def to_kelvin(c):
+	return c + 273.16
+
+def to_celsius(k):
+	return k - 273.16
 
 def parse_cabauw_data(data, metadata, basetime):
-	print('parsing cabauw data')
 	data = data.split()
 	splitted = list(grouper(len(metadata), data))
 	time = np.array([])
@@ -171,6 +178,13 @@ def parse_cabauw_data(data, metadata, basetime):
 		air_pressure_token = observation[43]
 		air_pressure = np.append(air_pressure, float(observation[44]))
 
+	potential_temp_10 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_10)), list(map(lambda x: x + correct_pressure(10), air_pressure)))))
+	potential_temp_20 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_20)), list(map(lambda x: x + correct_pressure(20), air_pressure)))))
+	potential_temp_40 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_40)), list(map(lambda x: x + correct_pressure(40), air_pressure)))))
+	potential_temp_80 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_80)), list(map(lambda x: x + correct_pressure(80), air_pressure)))))
+	potential_temp_140 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_140)), list(map(lambda x: x + correct_pressure(140), air_pressure)))))
+	potential_temp_200 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_200)), list(map(lambda x: x + correct_pressure(200), air_pressure)))))
+
 	# print observation
 	time = list(map(lambda x: basetime + timedelta(seconds=x) , time))
 	wind_speed = {
@@ -197,6 +211,15 @@ def parse_cabauw_data(data, metadata, basetime):
 		140: air_temp_140,
 		200: air_temp_200
 	}
+
+	pot_temps_c = {
+		10: potential_temp_10,
+		20: potential_temp_20,
+		40: potential_temp_40,
+		80: potential_temp_80,
+		140: potential_temp_140,
+		200: potential_temp_200
+	}
 	dew_point_temp = {
 		10: dew_point_temp_10,
 		20: dew_point_temp_20,
@@ -222,7 +245,7 @@ def parse_cabauw_data(data, metadata, basetime):
 		200: visibility_200
 	}
 	
-	return time, wind_speed, wind_dir, air_temp, dew_point_temp, relative_humidity, visibility, air_pressure
+	return time, wind_speed, wind_dir, air_temp, pot_temps_c, dew_point_temp, relative_humidity, visibility, air_pressure
 
 def compute_dewpoint_temp(qt, pres):
 	e=qt*pres/(.622+qt)
@@ -230,9 +253,9 @@ def compute_dewpoint_temp(qt, pres):
 	result=(273.16-f*35.86)/(1.-f)
 	return result
 
-def process_drone_data(data, basetime, metadata):
+def process_drone_data(data, basetime, metadata, current_air_pressure):
 	time, air_pressure, temperature, rel_hum, height = parse_radio_data(data, metadata, basetime)
-	(computed_height, potential_temperature, qs, q) = calculate_height(air_pressure, temperature, rel_hum, 1020)
+	(computed_height, potential_temperature, qs, q) = calculate_height(air_pressure, temperature, rel_hum, current_air_pressure)
 
 	potential_temperature = list(map(lambda x: x - 273.15, potential_temperature))
 	computed_dew_temp = compute_dewpoint_temp(q, air_pressure)
@@ -241,9 +264,6 @@ def process_drone_data(data, basetime, metadata):
 	computed_dew_temp = list(map(lambda x: x - 273.15, computed_dew_temp))
 	potential_dewpoint_temperature = list(map(lambda x: x - 273.15, potential_dewpoint_temperature))
 
-	print(computed_dew_temp[-1])
-	print(potential_dewpoint_temperature[-1])
-	print(air_pressure[-1])
 	radio_data = {
 		'time': time,
 		'air_pressure': air_pressure,
@@ -263,12 +283,13 @@ def process_drone_data(data, basetime, metadata):
 	
 
 def process_cabauw_data(data_cabauw, basetime, metadata_cabauw):
-	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
+	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, pot_temps_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
 	cabauw_data = {
 		'time': time_c, 
 		'wind_speed': wind_speeds_c, 
 		'wind_directions': wind_directions_c, 
 		'air_temperatures': air_temperatures_c, 
+		'potential_temperatures': pot_temps_c,
 		'dew_point_temperatures': dew_point_temperatures_c, 
 		'relative_humidities': relative_humidities_c, 
 		'visibilities': visibilities_c, 

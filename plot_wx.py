@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('WXAgg')
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
+import matplotlib.dates as md
 import numpy as np
 import pylab
 import pyftpbbc
@@ -16,14 +17,9 @@ from datetime import datetime
 from data import process_drone_data, process_cabauw_data
 import json 
 REDRAW_TIMER_MS = 10000
-basetime = datetime(2017, 6, 13, 0, 0, 0, 0)
+basetime = datetime(2017, 6, 14, 0, 0, 0, 0)
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
-
-
-def getData():
-    print('getData')
-    return int(random.uniform(1000, 1020))
 
 def getSensorData():
     print('getSensorData')
@@ -32,8 +28,8 @@ def getSensorData():
     data_cab = pyftpbbc.poll(basetime.strftime('%Y%m%d') + '_cab.txt').read()
     # print('got cabauw data')
     # radio_data, cabauw_data  = process_data(data, data_cab, basetime, metadata_radio, metadata_cabauw)
-    radio_data = process_drone_data(data, basetime, metadata_radio)
     cabauw_data = process_cabauw_data(data_cab, basetime, metadata_cabauw)
+    radio_data = process_drone_data(data, basetime, metadata_radio, cabauw_data['air_pressure'][-1])
     return (radio_data, cabauw_data) 
     # return [radio_data]
 
@@ -41,7 +37,7 @@ def getSensorData():
 class GraphFrame(wx.Frame):
  # the main frame of the application
     def __init__(self):
-        wx.Frame.__init__(self, None, -1, "Usart plotter", size=(800,600))
+        wx.Frame.__init__(self, None, -1, "Drone Morning Transition", size=(800,600))
 
         self.Centre()
         self.data = getSensorData()
@@ -117,9 +113,8 @@ class GraphFrame(wx.Frame):
         self.axes3 = self.fig.add_subplot(224)
         self.axes3.set_axis_bgcolor('white')
         self.axes3.set_title('Potential temp/Height', size=12)
-        self.axes3.set_xlabel('Potential Temperature')
-        self.axes3.set_ylabel('Height')
-
+        self.axes3.set_xlabel('Time')
+        self.axes3.set_ylabel('Potential Temperature')
 
         pylab.setp(self.axes.get_xticklabels(), fontsize=8)
         pylab.setp(self.axes.get_yticklabels(), fontsize=8)
@@ -132,7 +127,7 @@ class GraphFrame(wx.Frame):
 
         # plot the data as a line series, and save the reference 
         # to the plotted line series
-        #
+        
         self.plot_data = [
             self.axes.plot(
             self.data[0]['time'], 
@@ -163,43 +158,48 @@ class GraphFrame(wx.Frame):
 
             self.axes3.plot(
             self.data[1]['time'], 
-            self.data[1]['air_temperatures'][10], 
+            self.data[1]['potential_temperatures'][10], 
             linewidth=1,
-            color="blue",
+            color="black",
             )[0],
 
             self.axes3.plot(
             self.data[1]['time'], 
-            self.data[1]['air_temperatures'][20], 
-            linewidth=1,
-            color="red",
-            )[0],
-            self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['air_temperatures'][40], 
+            self.data[1]['potential_temperatures'][20], 
             linewidth=1,
             color="orange",
             )[0],
             self.axes3.plot(
             self.data[1]['time'], 
-            self.data[1]['air_temperatures'][80], 
+            self.data[1]['potential_temperatures'][40], 
             linewidth=1,
-            color="purple",
+            color="cyan",
             )[0],
             self.axes3.plot(
             self.data[1]['time'], 
-            self.data[1]['air_temperatures'][140], 
+            self.data[1]['potential_temperatures'][80], 
             linewidth=1,
-            color="black",
+            color="blue",
             )[0],
             self.axes3.plot(
             self.data[1]['time'], 
-            self.data[1]['air_temperatures'][200], 
+            self.data[1]['potential_temperatures'][140], 
             linewidth=1,
-            color="yellow",
+            color="green",
+            )[0],
+            self.axes3.plot(
+            self.data[1]['time'], 
+            self.data[1]['potential_temperatures'][200], 
+            linewidth=1,
+            color="red",
             )[0],
 
         ]
+        xfmt = md.DateFormatter('%H:%M')
+        self.axes.xaxis.set_major_formatter(xfmt)
+        self.axes1.xaxis.set_major_formatter(xfmt)
+        self.axes3.xaxis.set_major_formatter(xfmt)
+        self.axes3.legend(['  10', '  20', '  40', '  80', '140', '200'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
 
     def draw_plot(self):
         # redraws the plot
@@ -225,8 +225,8 @@ class GraphFrame(wx.Frame):
         min_temp = 1000
         max_temp = -1
         for h in heights:
-            min_temp = min(min(self.data[1]['air_temperatures'][h]), min_temp)
-            max_temp = max(max(self.data[1]['air_temperatures'][h]), max_temp)
+            min_temp = min(min(self.data[1]['potential_temperatures'][h]), min_temp)
+            max_temp = max(max(self.data[1]['potential_temperatures'][h]), max_temp)
 
         self.axes3.set_xbound(lower=xmin, upper=xmax)
         self.axes3.set_ybound(lower=min_temp - 0.5, upper=max_temp + 0.5)
@@ -245,12 +245,12 @@ class GraphFrame(wx.Frame):
         self.plot_data[1].set_ydata(self.data[0]['q'])
         self.plot_data[2].set_ydata(self.data[0]['computed_height'])
         self.plot_data[3].set_ydata(self.data[0]['computed_height'])
-        self.plot_data[4].set_ydata(self.data[1]['air_temperatures'][10])
-        self.plot_data[5].set_ydata(self.data[1]['air_temperatures'][20])
-        self.plot_data[6].set_ydata(self.data[1]['air_temperatures'][40])
-        self.plot_data[7].set_ydata(self.data[1]['air_temperatures'][80])
-        self.plot_data[8].set_ydata(self.data[1]['air_temperatures'][140])
-        self.plot_data[9].set_ydata(self.data[1]['air_temperatures'][200])
+        self.plot_data[4].set_ydata(self.data[1]['potential_temperatures'][10])
+        self.plot_data[5].set_ydata(self.data[1]['potential_temperatures'][20])
+        self.plot_data[6].set_ydata(self.data[1]['potential_temperatures'][40])
+        self.plot_data[7].set_ydata(self.data[1]['potential_temperatures'][80])
+        self.plot_data[8].set_ydata(self.data[1]['potential_temperatures'][140])
+        self.plot_data[9].set_ydata(self.data[1]['potential_temperatures'][200])
 
         self.canvas.draw()
 
