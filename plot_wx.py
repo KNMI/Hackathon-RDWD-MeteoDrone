@@ -17,7 +17,8 @@ from datetime import datetime
 from data import process_drone_data, process_cabauw_data
 import json 
 import pytz
-REDRAW_TIMER_MS = 10000
+import argparse
+REDRAW_TIMER_MS = 12000
 basetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
@@ -46,6 +47,11 @@ class GraphFrame(wx.Frame):
         self.redraw_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_redraw_timer, self.redraw_timer)        
         self.redraw_timer.Start(REDRAW_TIMER_MS)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--save-on-refresh", help="Save a PNG after every refresh", action="store_true")
+        args = parser.parse_args()
+        self.save_on_refresh = args.save_on_refresh
 
     def create_menu(self):
         self.menubar = wx.MenuBar()
@@ -427,6 +433,8 @@ class GraphFrame(wx.Frame):
             self.gps_height_label.SetLabel('GPS Height: {0:.2f}m'.format(self.data[0]['height'][-1]))
             self.computed_height_label.SetLabel('Computed Height: {0:.2f}m'.format(self.data[0]['computed_height'][-1]))
         self.draw_plot()
+        if self.save_on_refresh:
+            self.canvas.print_figure('autosave/{0}.png'.format(datetime.utcnow().strftime('%Y%m%d-%H%M%S')), dpi=self.dpi)
 
     def on_exit(self, event):
         self.Destroy()
