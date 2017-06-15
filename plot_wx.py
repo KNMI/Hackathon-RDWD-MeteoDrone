@@ -72,6 +72,9 @@ class GraphFrame(wx.Frame):
         menu_file = wx.Menu()
         m_expt = menu_file.Append(-1, "&Save plot\tCtrl-S", "Save plot to file")
         self.Bind(wx.EVT_MENU, self.on_save_plot, m_expt)
+        m_expt = menu_file.Append(-1, "&Export Data", "Export data to file")
+        self.Bind(wx.EVT_MENU, self.on_save_data, m_expt)
+
         menu_file.AppendSeparator()
         m_exit = menu_file.Append(-1, "E&xit\tCtrl-X", "Exit")
         self.Bind(wx.EVT_MENU, self.on_exit, m_exit)
@@ -143,37 +146,37 @@ class GraphFrame(wx.Frame):
         ))
         self.axes[0] = self.fig.add_subplot(231)
         self.axes[0].set_axis_bgcolor('white')
-        self.axes[0].set_title('Potential temp/Height', size=12)
+        self.axes[0].set_title('Drone - Potential temp/Height', size=12)
         self.axes[0].set_xlabel('Potential Temperature (C)')
         self.axes[0].set_ylabel('Height (m)')
 
         self.axes[1] = self.fig.add_subplot(232)
         self.axes[1].set_axis_bgcolor('white')
-        self.axes[1].set_title('Temperature drone', size=12)
+        self.axes[1].set_title('Drone - Temperature drone', size=12)
         self.axes[1].set_xlabel('Time (UTC)')
         self.axes[1].set_ylabel('Temperature (C)')
 
         self.axes[2] = self.fig.add_subplot(233)
         self.axes[2].set_axis_bgcolor('white')
-        self.axes[2].set_title('Mixing ratio', size=12)
+        self.axes[2].set_title('Drone - Mixing ratio', size=12)
         self.axes[2].set_xlabel('Time (UTC)')
         self.axes[2].set_ylabel('Mixing ratio (g / kg)')
 
         self.axes[3] = self.fig.add_subplot(234)
         self.axes[3].set_axis_bgcolor('white')
-        self.axes[3].set_title('Potential temp/Height', size=12)
+        self.axes[3].set_title('Cabauw - Potential temp/Height', size=12)
         self.axes[3].set_xlabel('Time (UTC)')
         self.axes[3].set_ylabel('Potential Temperature (C)')
 
         self.axes[4] = self.fig.add_subplot(235)
         self.axes[4].set_axis_bgcolor('white')
-        self.axes[4].set_title('Wind speed', size=12)
+        self.axes[4].set_title('Cabauw - Wind speed', size=12)
         self.axes[4].set_xlabel('Time (UTC)')
         self.axes[4].set_ylabel('Wind speed (m/s)')
 
         self.axes[5] = self.fig.add_subplot(236)
         self.axes[5].set_axis_bgcolor('white')
-        self.axes[5].set_title('Mixing Ratio Cabauw', size=12)
+        self.axes[5].set_title('Cabauw - Mixing Ratio', size=12)
         self.axes[5].set_xlabel('Time (UTC)')
         self.axes[5].set_ylabel('Mixing ratio (g / kg)')
 
@@ -234,7 +237,7 @@ class GraphFrame(wx.Frame):
         xfmt = md.DateFormatter('%H:%M')
         for ax in self.axes[1:]:
             ax.xaxis.set_major_formatter(xfmt)
-        self.axes[4].legend(['  10', '  20', '  40', '  80', '140', '200'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
+        self.axes[4].legend(['  10m', '  20m', '  40m', '  80m', '140m', '200m'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
 
     def update_cabauw_data(self, xdata, ydata, plot_idx, axes_idx, ydelta=0):
         xmin = safe_min(xdata)
@@ -359,6 +362,24 @@ class GraphFrame(wx.Frame):
     def on_update_pause_button(self, event):
         label = "Resume" if self.paused else "Pause"
         self.pause_button.SetLabel(label)
+
+    def save_data(self, path):
+        np.savez_compressed(path, drone_data=self.data[0], cabauw_data=self.data[1])
+
+    def on_save_data(self, event):
+        file_choices = "Numpy Compressed file (*.npz)|*.npz"
+
+        dlg = wx.FileDialog(
+            self, 
+            message="Save data...",
+            defaultDir=os.getcwd(),
+            defaultFile="data.npz",
+            wildcard=file_choices,
+            style=wx.SAVE)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.save_data(path)
+            self.flash_status_message("Saved data to %s" % path)
 
     def on_save_plot(self, event):
         file_choices = "PNG (*.png)|*.png"
