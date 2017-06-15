@@ -4,7 +4,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 import json
 from itertools import izip_longest
-from meteo import calculate_height, getTheta
+from meteo import calculate_height, getTheta, get_mixing_ratio
 
 # plotting stuff
 def filter_time(time):
@@ -115,6 +115,8 @@ def parse_cabauw_data(data, metadata, basetime):
 	air_pressure = np.array([])
 
 	for observation in splitted:
+		if any(obs == 'NAN' for obs in observation):
+			continue
 		secs_passed = int(observation[0])
 		time = np.append(time, secs_passed)
 		wind_speed_token = observation[1]
@@ -181,6 +183,7 @@ def parse_cabauw_data(data, metadata, basetime):
 	potential_temp_140 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_140)), list(map(lambda x: x + correct_pressure(140), air_pressure)))))
 	potential_temp_200 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_200)), list(map(lambda x: x + correct_pressure(200), air_pressure)))))
 
+
 	# print observation
 	time = list(map(lambda x: basetime + timedelta(seconds=x) , time))
 	wind_speed = {
@@ -240,8 +243,16 @@ def parse_cabauw_data(data, metadata, basetime):
 		140: visibility_140,
 		200: visibility_200
 	}
+
+
+	mixing_ratios = {}
+	for h in [10, 20, 40, 80, 140, 200]:
+		kelvin_dew_point_temp = map(to_kelvin, dew_point_temp[h])
+		qs = get_mixing_ratio(map(lambda x: x + correct_pressure(h), air_pressure), kelvin_dew_point_temp)
+		mixing_ratios[h] = np.multiply(1000.0, qs)
+
 	
-	return time, wind_speed, wind_dir, air_temp, pot_temps_c, dew_point_temp, relative_humidity, visibility, air_pressure
+	return time, wind_speed, wind_dir, air_temp, pot_temps_c, dew_point_temp, relative_humidity, visibility, mixing_ratios, air_pressure
 
 def compute_dewpoint_temp(qt, pres):
 	e=qt*pres/(.622+qt)
@@ -271,97 +282,24 @@ def process_drone_data(data, basetime, metadata, current_air_pressure):
 		'potential_temperature': potential_temperature,
 		'computed_height': computed_height,
 		'qs': qs,
-		'q': q
+		'q': np.multiply(1000.0, q)
 	}
-	print('Height (GPS): ', height[-1])
-	print('Height (computed): ', computed_height[-1])
 	return radio_data
 	
 
 def process_cabauw_data(data_cabauw, basetime, metadata_cabauw):
-	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, pot_temps_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
+	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, pot_temps_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, mixing_ratios_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
+
 	cabauw_data = {
 		'time': time_c, 
-		'wind_speed': wind_speeds_c, 
+		'wind_speeds': wind_speeds_c, 
 		'wind_directions': wind_directions_c, 
 		'air_temperatures': air_temperatures_c, 
 		'potential_temperatures': pot_temps_c,
 		'dew_point_temperatures': dew_point_temperatures_c, 
 		'relative_humidities': relative_humidities_c, 
 		'visibilities': visibilities_c, 
+		'mixing_ratios': mixing_ratios_c,
 		'air_pressure': air_pressures_c
 	}
-	print('Cabauw pressure: ', air_pressures_c[-1])
 	return cabauw_data
-	# return radio_data
-
-
-
-# def plot(basetime, metadata, time, air_pressure, temperature, rel_hum, height, time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, air_pressures_c):
-# 	# Calulate height for data
-# 	(heights, potential_temperature) = calculate_height(air_pressure, temperature, rel_hum, 1010.75)
-# 	print('Height (GPS): ', height[-1])
-# 	print('Height (calc): ', heights[-1])
-# 	i = 1
-# 	plt.subplot(321)
-# 	plt.plot(time, air_pressure)
-# 	plt.plot(time_c, air_pressures_c)
-# 	plt.ylabel(metadata[i]['units'])
-# 	plt.xlabel('Time')
-# 	plt.title(metadata[i]['name'])
-
-# 	i = 2
-# 	plt.subplot(322)
-# 	plt.plot(time, temperature)
-# 	plt.plot(time_c, air_temperatures_c[10])
-# 	plt.plot(time_c, air_temperatures_c[20])
-# 	plt.plot(time_c, air_temperatures_c[40])
-# 	plt.plot(time_c, air_temperatures_c[80])
-# 	plt.plot(time_c, air_temperatures_c[140])
-# 	plt.plot(time_c, air_temperatures_c[200])
-# 	# plt.plot(time, potential_temperature)
-# 	plt.ylabel(metadata[i]['units'])
-# 	plt.xlabel('Time')
-# 	plt.title(metadata[i]['name'])
-
-# 	i = 3
-# 	plt.subplot(323)
-# 	plt.plot(time, rel_hum)
-# 	plt.plot(time_c, relative_humidities_c[10])
-# 	plt.plot(time_c, relative_humidities_c[20])
-# 	plt.plot(time_c, relative_humidities_c[40])
-# 	plt.plot(time_c, relative_humidities_c[80])
-# 	plt.plot(time_c, relative_humidities_c[140])
-# 	plt.plot(time_c, relative_humidities_c[200])
-
-# 	plt.ylabel(metadata[i]['units'])
-# 	plt.xlabel('Time')
-# 	plt.title(metadata[i]['name'])
-
-# 	i = 4
-# 	plt.subplot(324)
-# 	plt.plot(time, np.abs(np.subtract(height, heights)), 'ro')
-# 	plt.title('Absolute error between GPS and calculated')
-# 	plt.ylabel(metadata[i]['units'])
-# 	plt.xlabel('Time')
-
-# 	plt.subplot(325)
-# 	# plt.plot(temperature, heights)
-# 	plt.plot(air_temperatures_c[10], [10] * len(air_temperatures_c[10]))
-# 	plt.plot(air_temperatures_c[20], [20] * len(air_temperatures_c[10]))
-# 	plt.plot(air_temperatures_c[40], [40] * len(air_temperatures_c[10]))
-# 	plt.plot(air_temperatures_c[80], [80] * len(air_temperatures_c[10]))
-# 	plt.plot(air_temperatures_c[140], [140] * len(air_temperatures_c[10]))
-# 	plt.plot(air_temperatures_c[200], [200] * len(air_temperatures_c[10]))
-
-# 	plt.title('Temp/Height profile')
-# 	plt.ylabel('Height')
-# 	plt.xlabel('Temperature')
-
-# 	plt.subplot(326)
-# 	plt.plot(potential_temperature, heights)
-# 	plt.title('Temp/Height profile')
-# 	plt.ylabel('Height')
-# 	plt.xlabel('Potential temperature')
-# 	plt.show(block=False)
-# 	plt.pause(0.0001)
