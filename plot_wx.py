@@ -3,7 +3,7 @@ import pprint
 import random
 import sys
 import wx
-
+import time
 # The recommended way to use wx with mpl is with the WXAgg backend
 import matplotlib
 matplotlib.use('WXAgg')
@@ -16,30 +16,26 @@ import pyftpbbc
 from datetime import datetime
 from data import process_drone_data, process_cabauw_data
 import json 
+import pytz
 REDRAW_TIMER_MS = 10000
-basetime = datetime(2017, 6, 14, 0, 0, 0, 0)
+basetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
 
 def getSensorData():
-    print('getSensorData')
-    data = pyftpbbc.poll(basetime.strftime('%Y%m%d') + '.txt').read()
-    print('got drone data')
-    data_cab = pyftpbbc.poll(basetime.strftime('%Y%m%d') + '_cab.txt').read()
-    # print('got cabauw data')
-    # radio_data, cabauw_data  = process_data(data, data_cab, basetime, metadata_radio, metadata_cabauw)
+    data_radio = pyftpbbc.poll('ftp_radio.json', basetime.strftime('%Y%m%d') + '.txt').read()
+    data_cab = pyftpbbc.poll_all('ftp_cabauw.json', basetime.strftime('%Y%m%d')).read()
     cabauw_data = process_cabauw_data(data_cab, basetime, metadata_cabauw)
-    radio_data = process_drone_data(data, basetime, metadata_radio, cabauw_data['air_pressure'][-1])
+    radio_data = process_drone_data(data_radio, basetime, metadata_radio, cabauw_data['air_pressure'][-1])
     return (radio_data, cabauw_data) 
-    # return [radio_data]
-
 
 class GraphFrame(wx.Frame):
  # the main frame of the application
     def __init__(self):
-        wx.Frame.__init__(self, None, -1, "Drone Morning Transition", size=(800,600))
+        wx.Frame.__init__(self, None, -1, "Drone Morning Transition")
 
         self.Centre()
+
         self.data = getSensorData()
         self.paused = False
 
@@ -72,18 +68,25 @@ class GraphFrame(wx.Frame):
 
   # pause button
         self.pause_button = wx.Button(self.panel, -1, "Pause")
+        self.cabauw_pressure_label = wx.StaticText(self.panel, label='Cabauw Air pressure: {0:.1f} hPa'.format(self.data[1]['air_pressure'][-1]), style=wx.ALIGN_CENTRE)
+        self.gps_height_label = wx.StaticText(self.panel, label='GPS Height: {0:.2f}m'.format(self.data[0]['height'][-1]), style=wx.ALIGN_CENTRE)
+        self.computed_height_label = wx.StaticText(self.panel, label='Computed Height: {0:.2f}m'.format(self.data[0]['computed_height'][-1]), style=wx.ALIGN_CENTRE)
         self.Bind(wx.EVT_BUTTON, self.on_pause_button, self.pause_button)
         self.Bind(wx.EVT_UPDATE_UI, self.on_update_pause_button, self.pause_button)
 
         self.hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         self.hbox1.Add(self.pause_button, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        self.hbox1.Add(self.cabauw_pressure_label, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        self.hbox1.Add(self.gps_height_label, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        self.hbox1.Add(self.computed_height_label, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
 
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox.Add(self.canvas, 1, flag=wx.LEFT | wx.TOP | wx.GROW)        
         self.vbox.Add(self.hbox1, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
         self.panel.SetSizer(self.vbox)
-        #self.vbox.Fit(self)
+
+        # self.vbox.Fit(self)
 
     def create_status_bar(self):
         self.statusbar = self.CreateStatusBar()
@@ -92,29 +95,42 @@ class GraphFrame(wx.Frame):
         self.dpi = 100
         self.fig = Figure((3.0, 3.0), dpi=self.dpi)
 
-        self.axes = self.fig.add_subplot(221)
-        self.axes.set_axis_bgcolor('white')
-        self.axes.set_title('Temperature drone', size=12)
-        self.axes.set_xlabel('time')
-        self.axes.set_ylabel('temperature')
-
-        self.axes1 = self.fig.add_subplot(222)
-        self.axes1.set_axis_bgcolor('white')
-        self.axes1.set_title('Mixing ratio', size=12)
-        self.axes1.set_xlabel('time')
-        self.axes1.set_ylabel('q')
-
-        self.axes2 = self.fig.add_subplot(223)
+        self.axes2 = self.fig.add_subplot(231)
         self.axes2.set_axis_bgcolor('white')
         self.axes2.set_title('Potential temp/Height', size=12)
-        self.axes2.set_xlabel('Potential Temperature')
-        self.axes2.set_ylabel('Height')
+        self.axes2.set_xlabel('Potential Temperature (C)')
+        self.axes2.set_ylabel('Height (m)')
 
-        self.axes3 = self.fig.add_subplot(224)
+        self.axes = self.fig.add_subplot(232)
+        self.axes.set_axis_bgcolor('white')
+        self.axes.set_title('Temperature drone', size=12)
+        self.axes.set_xlabel('Time (UTC)')
+        self.axes.set_ylabel('Temperature (C)')
+
+        self.axes1 = self.fig.add_subplot(233)
+        self.axes1.set_axis_bgcolor('white')
+        self.axes1.set_title('Mixing ratio', size=12)
+        self.axes1.set_xlabel('Time (UTC)')
+        self.axes1.set_ylabel('Mixing ratio (g / kg)')
+
+        self.axes3 = self.fig.add_subplot(234)
         self.axes3.set_axis_bgcolor('white')
         self.axes3.set_title('Potential temp/Height', size=12)
-        self.axes3.set_xlabel('Time')
-        self.axes3.set_ylabel('Potential Temperature')
+        self.axes3.set_xlabel('Time (UTC)')
+        self.axes3.set_ylabel('Potential Temperature (C)')
+
+        self.axes4 = self.fig.add_subplot(235)
+        self.axes4.set_axis_bgcolor('white')
+        self.axes4.set_title('Wind speed', size=12)
+        self.axes4.set_xlabel('Time (UTC)')
+        self.axes4.set_ylabel('Wind speed (m/s)')
+
+        self.axes5 = self.fig.add_subplot(236)
+        self.axes5.set_axis_bgcolor('white')
+        self.axes5.set_title('Mixing Ratio Cabauw', size=12)
+        self.axes5.set_xlabel('Time (UTC)')
+        self.axes5.set_ylabel('Mixing ratio (g / kg)')
+
 
         pylab.setp(self.axes.get_xticklabels(), fontsize=8)
         pylab.setp(self.axes.get_yticklabels(), fontsize=8)
@@ -124,76 +140,89 @@ class GraphFrame(wx.Frame):
         pylab.setp(self.axes2.get_yticklabels(), fontsize=8)
         pylab.setp(self.axes3.get_xticklabels(), fontsize=8)
         pylab.setp(self.axes3.get_yticklabels(), fontsize=8)
+        pylab.setp(self.axes4.get_xticklabels(), fontsize=8)
+        pylab.setp(self.axes4.get_yticklabels(), fontsize=8)
+        pylab.setp(self.axes5.get_xticklabels(), fontsize=8)
+        pylab.setp(self.axes5.get_yticklabels(), fontsize=8)
 
         # plot the data as a line series, and save the reference 
         # to the plotted line series
-        time=self.data[0]['time']
-        temp=self.data[0]['temperature']
-        
+        time_drone = self.data[0]['time']
+        temp_drone = self.data[0]['temperature']
+        mixing_ratio_drone = self.data[0]['temperature']
+        pot_temp_drone = self.data[0]['potential_temperature']
+        pot_dewpoint_temp_drone = self.data[0]['potential_dewpoint_temp']
+        height_drone = self.data[0]['computed_height']
+
+
+        cabauw_time = self.data[1]['time']
+        cabauw_potential_temperatures = self.data[1]['potential_temperatures']
+        cabauw_wind_speeds = self.data[1]['wind_speeds']
+        cabauw_mixing_ratios = self.data[1]['mixing_ratios']
         Nstart=5000
         Ndata=6000
         self.plot_data = [
             self.axes.plot(
-                time, 
-                temp, 
+                time_drone, 
+                temp_drone, 
             linewidth=1,
             color="blue",
             )[0],
 
             self.axes1.plot(
-            self.data[0]['time'], 
-            self.data[0]['q'], 
+            time_drone, 
+            mixing_ratio_drone, 
             linewidth=1,
             color="blue",
             )[0],
 
             self.axes2.plot(
-                self.data[0]['potential_temperature'][Nstart:Ndata],
-            self.data[0]['computed_height'][Nstart:Ndata],
-            color="red",
+                pot_temp_drone[Nstart:Ndata],
+                height_drone[Nstart:Ndata],
+                color="red",
                 alpha=1,
             )[0],
             self.axes2.plot(
-            self.data[0]['potential_dewpoint_temp'][Nstart:Ndata],
-            self.data[0]['computed_height'][Nstart:Ndata],
+            pot_dewpoint_temp_drone[Nstart:Ndata],
+            height_drone[Nstart:Ndata],
             linewidth=1,
             color="blue",
             )[0],
 
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][10], 
+            cabauw_time, 
+            cabauw_potential_temperatures[10], 
             linewidth=1,
             color="black",
             )[0],
 
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][20], 
+            cabauw_time, 
+            cabauw_potential_temperatures[20], 
             linewidth=1,
             color="orange",
             )[0],
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][40], 
+            cabauw_time, 
+            cabauw_potential_temperatures[40], 
             linewidth=1,
             color="cyan",
             )[0],
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][80], 
+            cabauw_time, 
+            cabauw_potential_temperatures[80], 
             linewidth=1,
             color="blue",
             )[0],
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][140], 
+            cabauw_time, 
+            cabauw_potential_temperatures[140], 
             linewidth=1,
             color="green",
             )[0],
             self.axes3.plot(
-            self.data[1]['time'], 
-            self.data[1]['potential_temperatures'][200], 
+            cabauw_time, 
+            cabauw_potential_temperatures[200], 
             linewidth=1,
             color="red",
             )[0],
@@ -209,19 +238,94 @@ class GraphFrame(wx.Frame):
             color="blue",
                 alpha=0.1,
             )[0],
-           self.axes2.plot(
+            self.axes2.plot(
             self.data[1]['potential_temperatures'][200][-1], 
                200,'o',
                color="blue",
                 alpha=1,
             )[0],
-1
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[10], 
+            linewidth=1,
+            color="black",
+            )[0],
+
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[20], 
+            linewidth=1,
+            color="orange",
+            )[0],
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[40], 
+            linewidth=1,
+            color="cyan",
+            )[0],
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[80], 
+            linewidth=1,
+            color="blue",
+            )[0],
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[140], 
+            linewidth=1,
+            color="green",
+            )[0],
+            self.axes4.plot(
+            cabauw_time, 
+            cabauw_wind_speeds[200], 
+            linewidth=1,
+            color="red",
+            )[0],
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[10], 
+            linewidth=1,
+            color="black",
+            )[0],
+
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[20], 
+            linewidth=1,
+            color="orange",
+            )[0],
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[40], 
+            linewidth=1,
+            color="cyan",
+            )[0],
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[80], 
+            linewidth=1,
+            color="blue",
+            )[0],
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[140], 
+            linewidth=1,
+            color="green",
+            )[0],
+            self.axes5.plot(
+            cabauw_time, 
+            cabauw_mixing_ratios[200], 
+            linewidth=1,
+            color="red",
+            )[0],
         ]
         xfmt = md.DateFormatter('%H:%M')
         self.axes.xaxis.set_major_formatter(xfmt)
         self.axes1.xaxis.set_major_formatter(xfmt)
         self.axes3.xaxis.set_major_formatter(xfmt)
-        self.axes3.legend(['  10', '  20', '  40', '  80', '140', '200'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
+        self.axes4.xaxis.set_major_formatter(xfmt)
+        self.axes5.xaxis.set_major_formatter(xfmt)
+        self.axes4.legend(['  10', '  20', '  40', '  80', '140', '200'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
 
     def draw_plot(self):
         # redraws the plot
@@ -319,7 +423,9 @@ class GraphFrame(wx.Frame):
     def on_redraw_timer(self, event):
         if not self.paused:
             self.data = getSensorData()
-            print(self.data[0]['time'][-1])
+            self.cabauw_pressure_label.SetLabel('Cabauw Air pressure: {0:.1f} hPa'.format(self.data[1]['air_pressure'][-1]))
+            self.gps_height_label.SetLabel('GPS Height: {0:.2f}m'.format(self.data[0]['height'][-1]))
+            self.computed_height_label.SetLabel('Computed Height: {0:.2f}m'.format(self.data[0]['computed_height'][-1]))
         self.draw_plot()
 
     def on_exit(self, event):
@@ -339,7 +445,8 @@ class GraphFrame(wx.Frame):
 
 
 if __name__ == '__main__':
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     app.frame = GraphFrame()
     app.frame.Show()
+    app.frame.Maximize(True)
     app.MainLoop()

@@ -4,10 +4,34 @@ import json
 import ftplib
 from pprint import pprint
 import StringIO
+import re 
+def poll_all(jsonconfig, pattern):
+    with open(jsonconfig) as jsonf:
+        ftpdata = json.loads(jsonf.read())
 
+        ftp = ftplib.FTP( ftpdata['ftp']['server'] )
 
-def poll(filename):
-    with open('ftp.json') as jsonf:
+        # login based on account given.
+        ftp.login(ftpdata['ftp']['user'] , ftpdata['ftp']['password'])
+
+        ftp.cwd(ftpdata['ftp']['dir'])
+
+        files = ftp.nlst()
+
+        relevant_files = filter(lambda x: x.startswith(pattern), files)
+
+        sio = StringIO.StringIO()
+
+        # fetch all files matching the pattern
+        for f in sorted(relevant_files):
+            ftp.retrbinary("RETR " + f, callback=lambda data: sio.write(data))
+
+        sio.seek(0)
+        ftp.quit()
+        return sio
+
+def poll(jsonconfig, filename):
+    with open(jsonconfig) as jsonf:
         ftpdata = json.loads(jsonf.read())
 
         ftp = ftplib.FTP( ftpdata['ftp']['server'] )
@@ -27,15 +51,9 @@ def poll(filename):
         resp = ftp.retrbinary("RETR " + filename, callback=handle_binary)
 
         sio.seek(0) # Go back to the start
-
-        return sio #.read()
-
-        # compression option
-        #zippy = gzip.GzipFile(fileobj=sio)
-        #uncompressed = zippy.read()
-
         ftp.quit()
 
+        return sio
 
 def connect(ftpjson):
     with open(ftpjson) as jsonf:
