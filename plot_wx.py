@@ -127,11 +127,15 @@ class GraphFrame(wx.Frame):
 
         # plot the data as a line series, and save the reference 
         # to the plotted line series
+        time=self.data[0]['time']
+        temp=self.data[0]['temperature']
         
+        Nstart=5000
+        Ndata=6000
         self.plot_data = [
             self.axes.plot(
-            self.data[0]['time'], 
-            self.data[0]['temperature'], 
+                time, 
+                temp, 
             linewidth=1,
             color="blue",
             )[0],
@@ -144,14 +148,14 @@ class GraphFrame(wx.Frame):
             )[0],
 
             self.axes2.plot(
-            self.data[0]['potential_temperature'], 
-            self.data[0]['computed_height'], 
-            linewidth=1,
+                self.data[0]['potential_temperature'][Nstart:Ndata],
+            self.data[0]['computed_height'][Nstart:Ndata],
             color="red",
+                alpha=1,
             )[0],
             self.axes2.plot(
-            self.data[0]['potential_dewpoint_temp'], 
-            self.data[0]['computed_height'], 
+            self.data[0]['potential_dewpoint_temp'][Nstart:Ndata],
+            self.data[0]['computed_height'][Nstart:Ndata],
             linewidth=1,
             color="blue",
             )[0],
@@ -193,7 +197,25 @@ class GraphFrame(wx.Frame):
             linewidth=1,
             color="red",
             )[0],
-
+            self.axes2.plot(
+            self.data[0]['potential_temperature'][0:Nstart], 
+            self.data[0]['computed_height'][0:Nstart], 
+            color="red",
+                alpha=0.1,
+            )[0],
+            self.axes2.plot(
+            self.data[0]['potential_dewpoint_temp'][0:Nstart], 
+            self.data[0]['computed_height'][0:Nstart], 
+            color="blue",
+                alpha=0.1,
+            )[0],
+           self.axes2.plot(
+            self.data[1]['potential_temperatures'][200][-1], 
+               200,'o',
+               color="blue",
+                alpha=1,
+            )[0],
+1
         ]
         xfmt = md.DateFormatter('%H:%M')
         self.axes.xaxis.set_major_formatter(xfmt)
@@ -218,6 +240,18 @@ class GraphFrame(wx.Frame):
         xmax = max(max(self.data[0]['potential_dewpoint_temp']), max(self.data[0]['potential_temperature'])) + 5
         self.axes2.set_xbound(lower=xmin, upper=xmax)
         self.axes2.set_ybound(lower=min(self.data[0]['computed_height']) - 2, upper=max(self.data[0]['computed_height']) + 2)
+
+        Ndata=len(self.data[0]['potential_temperature'])
+        #Ndata=6500
+        xmin = min(min(self.data[0]['potential_dewpoint_temp'][0:Ndata]), min(self.data[0]['potential_temperature'][0:Ndata])) - 5
+        xmax = max(max(self.data[0]['potential_dewpoint_temp'][0:Ndata]), max(self.data[0]['potential_temperature'][0:Ndata])) + 5
+        self.axes2.set_xbound(lower=xmin, upper=xmax)
+        self.axes2.set_ybound(lower=min(self.data[0]['computed_height'][0:Ndata]) - 2, upper=max(self.data[0]['computed_height'][0:Ndata]) + 2)
+        print "Nsieb",Ndata
+        Nstart=Ndata-1000
+        if Nstart<1:Nstart=1
+
+
         xmin = self.data[1]['time'][0]
         xmax = self.data[1]['time'][-1]
 
@@ -232,25 +266,30 @@ class GraphFrame(wx.Frame):
         self.axes3.set_ybound(lower=min_temp - 0.5, upper=max_temp + 0.5)
         self.plot_data[0].set_xdata(self.data[0]['time'])
         self.plot_data[1].set_xdata(self.data[0]['time'])
-        self.plot_data[2].set_xdata(self.data[0]['potential_temperature'])
-        self.plot_data[3].set_xdata(self.data[0]['potential_dewpoint_temp'])
+        self.plot_data[2].set_xdata(self.data[0]['potential_temperature'][Nstart:Ndata])
+        self.plot_data[3].set_xdata(self.data[0]['potential_dewpoint_temp'][Nstart:Ndata])
         self.plot_data[4].set_xdata(self.data[1]['time'])
         self.plot_data[5].set_xdata(self.data[1]['time'])
         self.plot_data[6].set_xdata(self.data[1]['time'])
         self.plot_data[7].set_xdata(self.data[1]['time'])
         self.plot_data[8].set_xdata(self.data[1]['time'])
         self.plot_data[9].set_xdata(self.data[1]['time'])
+        self.plot_data[10].set_xdata(self.data[0]['potential_temperature'][0:Nstart])
+        self.plot_data[11].set_xdata(self.data[0]['potential_dewpoint_temp'][0:Nstart])
 
         self.plot_data[0].set_ydata(self.data[0]['temperature'])
         self.plot_data[1].set_ydata(self.data[0]['q'])
-        self.plot_data[2].set_ydata(self.data[0]['computed_height'])
-        self.plot_data[3].set_ydata(self.data[0]['computed_height'])
+        self.plot_data[2].set_ydata(self.data[0]['computed_height'][Nstart:Ndata])
+        self.plot_data[3].set_ydata(self.data[0]['computed_height'][Nstart:Ndata])
         self.plot_data[4].set_ydata(self.data[1]['potential_temperatures'][10])
         self.plot_data[5].set_ydata(self.data[1]['potential_temperatures'][20])
         self.plot_data[6].set_ydata(self.data[1]['potential_temperatures'][40])
         self.plot_data[7].set_ydata(self.data[1]['potential_temperatures'][80])
         self.plot_data[8].set_ydata(self.data[1]['potential_temperatures'][140])
         self.plot_data[9].set_ydata(self.data[1]['potential_temperatures'][200])
+        self.plot_data[10].set_ydata(self.data[0]['computed_height'][0:Nstart])
+        self.plot_data[11].set_ydata(self.data[0]['computed_height'][0:Nstart])
+        self.plot_data[12].set_xdata(self.data[1]['potential_temperatures'][200][-1])
 
         self.canvas.draw()
 

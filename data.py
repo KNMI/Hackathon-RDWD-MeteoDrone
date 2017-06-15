@@ -5,10 +5,6 @@ from matplotlib import pyplot as plt
 import json
 from itertools import izip_longest
 from meteo import calculate_height, getTheta
-import plotly.dashboard_objs as dashboard
-
-import IPython.display
-from IPython.display import Image
 
 # plotting stuff
 def filter_time(time):
