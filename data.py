@@ -183,6 +183,12 @@ def parse_cabauw_data(data, metadata, basetime):
 	potential_temp_140 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_140)), list(map(lambda x: x + correct_pressure(140), air_pressure)))))
 	potential_temp_200 = list(map(to_celsius, getTheta(list(map(to_kelvin, air_temp_200)), list(map(lambda x: x + correct_pressure(200), air_pressure)))))
 
+	potential_dewpoint_temp_10 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_10)), list(map(lambda x: x + correct_pressure(10), air_pressure)))))
+	potential_dewpoint_temp_20 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_20)), list(map(lambda x: x + correct_pressure(20), air_pressure)))))
+	potential_dewpoint_temp_40 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_40)), list(map(lambda x: x + correct_pressure(40), air_pressure)))))
+	potential_dewpoint_temp_80 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_80)), list(map(lambda x: x + correct_pressure(80), air_pressure)))))
+	potential_dewpoint_temp_140 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_140)), list(map(lambda x: x + correct_pressure(140), air_pressure)))))
+	potential_dewpoint_temp_200 = list(map(to_celsius, getTheta(list(map(to_kelvin, dew_point_temp_200)), list(map(lambda x: x + correct_pressure(200), air_pressure)))))
 
 	# print observation
 	time = list(map(lambda x: basetime + timedelta(seconds=x) , time))
@@ -219,6 +225,14 @@ def parse_cabauw_data(data, metadata, basetime):
 		140: potential_temp_140,
 		200: potential_temp_200
 	}
+	pot_dewpoint_temps_c = {
+		10: potential_dewpoint_temp_10,
+		20: potential_dewpoint_temp_20,
+		40: potential_dewpoint_temp_40,
+		80: potential_dewpoint_temp_80,
+		140: potential_dewpoint_temp_140,
+		200: potential_dewpoint_temp_200
+	}
 	dew_point_temp = {
 		10: dew_point_temp_10,
 		20: dew_point_temp_20,
@@ -252,7 +266,7 @@ def parse_cabauw_data(data, metadata, basetime):
 		mixing_ratios[h] = np.multiply(1000.0, qs)
 
 	
-	return time, wind_speed, wind_dir, air_temp, pot_temps_c, dew_point_temp, relative_humidity, visibility, mixing_ratios, air_pressure
+	return time, wind_speed, wind_dir, air_temp, pot_temps_c, dew_point_temp, pot_dewpoint_temps_c, relative_humidity, visibility, mixing_ratios, air_pressure
 
 def compute_dewpoint_temp(qt, pres):
 	e=qt*pres/(.622+qt)
@@ -288,7 +302,7 @@ def process_drone_data(data, basetime, metadata, current_air_pressure):
 	
 
 def process_cabauw_data(data_cabauw, basetime, metadata_cabauw):
-	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, pot_temps_c, dew_point_temperatures_c, relative_humidities_c, visibilities_c, mixing_ratios_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
+	time_c, wind_speeds_c, wind_directions_c, air_temperatures_c, pot_temps_c, dew_point_temperatures_c, pot_dewpoint_temps_c, relative_humidities_c, visibilities_c, mixing_ratios_c, air_pressures_c = parse_cabauw_data(data_cabauw, metadata_cabauw, basetime)
 
 	cabauw_data = {
 		'time': time_c, 
@@ -297,6 +311,7 @@ def process_cabauw_data(data_cabauw, basetime, metadata_cabauw):
 		'air_temperatures': air_temperatures_c, 
 		'potential_temperatures': pot_temps_c,
 		'dew_point_temperatures': dew_point_temperatures_c, 
+		'potential_dew_point_temperatures': pot_dewpoint_temps_c, 
 		'relative_humidities': relative_humidities_c, 
 		'visibilities': visibilities_c, 
 		'mixing_ratios': mixing_ratios_c,
