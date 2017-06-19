@@ -39,7 +39,7 @@ def parse_radio_data(data, metadata, basetime, latest_time):
 	for line in splitted:
 		t, pres, temp, rela_hum, h, lat, lon = line
 		t_mapped = basetime + timedelta(seconds=int(t))
-		if (latest_time is None or t_mapped > latest_time):
+		if int(t) > 0 and (latest_time is None or t_mapped > latest_time):
 			time = np.append(time, np.array(t_mapped))
 			air_pressure = np.append(air_pressure, np.array(float(pres)))
 			temperature = np.append(temperature, np.array(float(temp)))

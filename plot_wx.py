@@ -236,7 +236,8 @@ class GraphFrame(wx.Frame):
         pot_dewpoint_temp_drone_before = pot_dewpoint_temp_drone[:self.demarcation_time_idx]
         pot_dewpoint_temp_drone_after = pot_dewpoint_temp_drone[self.demarcation_time_idx:]
 
-        height_drone = self.data[0]['computed_height']
+        # height_drone = self.data[0]['computed_height']
+        height_drone = self.data[0]['height']
         height_before = height_drone[:self.demarcation_time_idx]
         height_after = height_drone[self.demarcation_time_idx:]
 
@@ -245,7 +246,7 @@ class GraphFrame(wx.Frame):
         cabauw_potential_dewpoint_temperatures = self.data[1]['potential_dew_point_temperatures']
         cabauw_wind_speeds = self.data[1]['wind_speeds']
         cabauw_mixing_ratios = self.data[1]['mixing_ratios']
-
+        # print(pot_temp_drone_after, self.data[0]['height'])
         self.plot_data = [
             self.plot_drone_data(pot_temp_drone_before, height_before, 0, 'red', alpha=0.1),
             self.plot_drone_data(pot_dewpoint_temp_drone_before, height_before, 0, 'blue', alpha=0.1),
@@ -312,7 +313,8 @@ class GraphFrame(wx.Frame):
         pot_dewpoint_temp_drone_before = pot_dewpoint_temp_drone[:self.demarcation_time_idx]
         pot_dewpoint_temp_drone_after = pot_dewpoint_temp_drone[self.demarcation_time_idx:]
 
-        height_drone = self.data[0]['computed_height']
+        # height_drone = self.data[0]['computed_height']
+        height_drone = self.data[0]['height']
         height_drone_before = height_drone[:self.demarcation_time_idx]
         height_drone_after = height_drone[self.demarcation_time_idx:]
 
@@ -328,12 +330,12 @@ class GraphFrame(wx.Frame):
 
         self.plot_data[1].set_xdata(pot_dewpoint_temp_drone_before)
         self.plot_data[1].set_ydata(height_drone_before)
-        
-        # self.plot_data[2].set_xdata(pot_temp_drone_after)
-        # self.plot_data[2].set_ydata(height_drone_after)
 
-        # self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
-        # self.plot_data[3].set_ydata(height_drone_after)
+        self.plot_data[2].set_xdata(pot_temp_drone_after)
+        self.plot_data[2].set_ydata(height_drone_after)
+
+        self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
+        self.plot_data[3].set_ydata(height_drone_after)
 
 
         xmin_cab = 1000
@@ -342,7 +344,9 @@ class GraphFrame(wx.Frame):
         for (h, c) in zip([10, 20, 40, 80, 140, 200], ['black', 'orange', 'cyan', 'blue', 'green', 'red']):
             self.plot_data[4][i].set_xdata(cabauw_potential_temperatures[h][-1])
             self.plot_data[4][i + 6].set_xdata(cabauw_potential_dewpoint_temperatures[h][-1])
+            xmin_cab = min(cabauw_potential_dewpoint_temperatures[h][-1], xmin_cab)
             xmin_cab = min(cabauw_potential_temperatures[h][-1], xmin_cab)
+            xmax_cab = max(cabauw_potential_dewpoint_temperatures[h][-1], xmax_cab)
             xmax_cab = max(cabauw_potential_temperatures[h][-1], xmax_cab)
 
         pot_temp_min = np.min(pot_temp_drone_after) if len(pot_temp_drone_after) > 0 else 0
@@ -356,7 +360,7 @@ class GraphFrame(wx.Frame):
         ymax = max(210, np.max(height_drone_after) if len(height_drone_after) > 0 else 0)
         ymin = np.min(height_drone_after) if len(height_drone_after) > 0 else 0
         ydelta = 1
-        xdelta = 0.25
+        xdelta = 1
         self.axes[0].set_xbound(lower=min(xmin_cab, xmin) - xdelta, upper=max(xmax_cab, xmax) + xdelta)
         self.axes[0].set_ybound(lower=ymin - ydelta, upper=ymax + ydelta)
 
