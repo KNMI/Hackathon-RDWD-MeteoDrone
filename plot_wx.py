@@ -18,16 +18,23 @@ from data import process_drone_data, process_cabauw_data
 import json 
 import pytz
 import argparse
+
+
 REDRAW_TIMER_MS = 8000
 basetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
 
-def getSensorData():
+
+
+def getSensorData(latest_drone_time, latest_cabauw_time, latest_cabauw_pressure):
     data_radio = pyftpbbc.poll('ftp_radio.json', basetime.strftime('%Y%m%d') + '.txt').read()
     data_cab = pyftpbbc.poll_all('ftp_cabauw.json', basetime.strftime('%Y%m%d')).read()
-    cabauw_data = process_cabauw_data(data_cab, basetime, metadata_cabauw)
-    radio_data = process_drone_data(data_radio, basetime, metadata_radio, cabauw_data['air_pressure'][-1])
+
+    cabauw_data = process_cabauw_data(data_cab, basetime, metadata_cabauw, latest_cabauw_time)
+    cab_pres = cabauw_data['air_pressure'][-1] if len(cabauw_data['air_pressure']) > 0 else latest_cabauw_pressure
+
+    radio_data = process_drone_data(data_radio, basetime, metadata_radio, cab_pres, latest_drone_time)
     return (radio_data, cabauw_data) 
 
 def safe_max(ar): 
@@ -46,9 +53,8 @@ class GraphFrame(wx.Frame):
         self.axes = [None] * self.num_plots
         self.plots_per_subplot = [None] * self.num_plots
         self.cum_plots = None
-        self.data = getSensorData()
+        self.data = getSensorData(None, None, None)
         self.paused = False
-
         self.demarcation_time_idx = 0
 
         self.create_menu()
@@ -240,8 +246,8 @@ class GraphFrame(wx.Frame):
         self.axes[4].legend(['  10m', '  20m', '  40m', '  80m', '140m', '200m'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
 
     def update_cabauw_data(self, xdata, ydata, plot_idx, axes_idx, ydelta=0):
-        xmin = safe_min(xdata)
-        xmax = safe_max(xdata)
+        xmin = np.min(xdata)
+        xmax = np.max(xdata)
         ymin = 10000
         ymax = -1000
         for (i, h) in enumerate([10, 20, 40, 80, 140, 200]):
@@ -285,6 +291,8 @@ class GraphFrame(wx.Frame):
         cabauw_potential_dewpoint_temperatures = self.data[1]['potential_dew_point_temperatures']
         cabauw_wind_speeds = self.data[1]['wind_speeds']
         cabauw_mixing_ratios = self.data[1]['mixing_ratios']
+
+
         # first plot
         self.plot_data[0].set_xdata(pot_temp_drone_before)
         self.plot_data[0].set_ydata(height_drone_before)
@@ -309,10 +317,10 @@ class GraphFrame(wx.Frame):
             xmax_cab = max(cabauw_potential_temperatures[h][-1], xmax_cab)
 
 
-        xmin = min(safe_min(pot_temp_drone_after), safe_min(pot_dewpoint_temp_drone_after))
-        xmax = max(safe_max(pot_temp_drone_after), safe_max(pot_dewpoint_temp_drone_after))
-        ymax = max(210, safe_max(height_drone_after))
-        ymin = safe_min(height_drone_after)
+        xmin = min(np.min(pot_temp_drone_after), np.min(pot_dewpoint_temp_drone_after))
+        xmax = max(np.max(pot_temp_drone_after), np.max(pot_dewpoint_temp_drone_after))
+        ymax = max(210, np.max(height_drone_after))
+        ymin = np.min(height_drone_after)
         ydelta = 1
         xdelta = 0.25
         self.axes[0].set_xbound(lower=min(xmin_cab, xmin) - xdelta, upper=max(xmax_cab, xmax) + xdelta)
@@ -345,6 +353,7 @@ class GraphFrame(wx.Frame):
         self.axes[2].set_xbound(lower=xmin, upper=xmax)
         self.axes[2].set_ybound(lower=ymin - ydelta, upper=ymax + ydelta)
 
+
         # fourth plot
         self.update_cabauw_data(cabauw_time, cabauw_potential_temperatures, plot_idx=9, axes_idx=3, ydelta=1)
         self.update_cabauw_data(cabauw_time, cabauw_wind_speeds, plot_idx=10, axes_idx=4, ydelta=1)
@@ -356,7 +365,6 @@ class GraphFrame(wx.Frame):
 
     def on_new_drone_flight_button(self, event):
         self.demarcation_time_idx = len(self.data[0]['time'])
-        print(self.demarcation_time_idx)
         self.draw_plot()
 
     def on_update_pause_button(self, event):
@@ -399,7 +407,22 @@ class GraphFrame(wx.Frame):
 
     def on_redraw_timer(self, event):
         if not self.paused:
-            self.data = getSensorData()
+            (new_drone_data, new_cabauw_data) = getSensorData(max(self.data[0]['time']), max(self.data[1]['time']), self.data[1]['air_pressure'][-1])
+            all_cabauw_data = {}
+            all_drone_data = {}
+            for (k, v) in new_drone_data.iteritems():
+                all_drone_data[k] = np.append(self.data[0][k], v)
+
+            for (k, v) in new_cabauw_data.iteritems():
+                if k == 'air_pressure' or k == 'time': 
+                    all_cabauw_data[k] = np.append(self.data[1][k], v)
+                else:
+                    all_cabauw_data[k] = {}
+                    for (k1, v1) in new_cabauw_data[k].iteritems():
+                        all_cabauw_data[k][k1] = np.append(self.data[1][k][k1], v1)
+                
+            self.data = (all_drone_data, all_cabauw_data)
+
         self.draw_plot()
         self.fig.suptitle('{0} - Cabauw Air pressure: {1:.1f} hPa - GPS height: {2:.2f}m - Computed Height: {3:.2f}m'.format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 
             self.data[1]['air_pressure'][-1],

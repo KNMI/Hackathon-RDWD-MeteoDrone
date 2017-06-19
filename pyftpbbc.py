@@ -30,7 +30,7 @@ def poll_all(jsonconfig, pattern):
         ftp.quit()
         return sio
 
-def poll(jsonconfig, filename):
+def poll(jsonconfig, filename, bytes_received=0):
     with open(jsonconfig) as jsonf:
         ftpdata = json.loads(jsonf.read())
 
@@ -48,7 +48,10 @@ def poll(jsonconfig, filename):
         def handle_binary(more_data):
             sio.write(more_data)
         
-        resp = ftp.retrbinary("RETR " + filename, callback=handle_binary)
+        if bytes_received != 0:
+            resp = ftp.retrbinary("RETR " + filename, callback=handle_binary, rest=bytes_received)
+        else:
+            resp = ftp.retrbinary("RETR " + filename, callback=handle_binary)
 
         sio.seek(0) # Go back to the start
         ftp.quit()
