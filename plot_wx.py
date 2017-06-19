@@ -299,11 +299,11 @@ class GraphFrame(wx.Frame):
         self.plot_data[1].set_xdata(pot_dewpoint_temp_drone_before)
         self.plot_data[1].set_ydata(height_drone_before)
         
-        # self.plot_data[2].set_xdata(pot_temp_drone_after)
-        # self.plot_data[2].set_ydata(height_drone_after)
+        self.plot_data[2].set_xdata(pot_temp_drone_after)
+        self.plot_data[2].set_ydata(height_drone_after)
 
-        # self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
-        # self.plot_data[3].set_ydata(height_drone_after)
+        self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
+        self.plot_data[3].set_ydata(height_drone_after)
 
 
         xmin_cab = 1000
