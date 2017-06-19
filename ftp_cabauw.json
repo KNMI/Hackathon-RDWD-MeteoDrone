@@ -1,9 +1,0 @@
-{
-	"ftp" : 
-		{
-			"server" 	: "bbc.knmi.nl",
-			"user"   	: "csr_knmi",
-			"password" 	: "357pqR",
-			"dir"  : "MEMBERS/knmi/datatransfer/hackaton"
-		}
-}
