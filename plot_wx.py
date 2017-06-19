@@ -20,7 +20,7 @@ import pytz
 import argparse
 
 
-REDRAW_TIMER_MS = 8000
+REDRAW_TIMER_MS = 12000
 basetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
@@ -292,19 +292,18 @@ class GraphFrame(wx.Frame):
         cabauw_wind_speeds = self.data[1]['wind_speeds']
         cabauw_mixing_ratios = self.data[1]['mixing_ratios']
 
-
         # first plot
         self.plot_data[0].set_xdata(pot_temp_drone_before)
         self.plot_data[0].set_ydata(height_drone_before)
 
         self.plot_data[1].set_xdata(pot_dewpoint_temp_drone_before)
         self.plot_data[1].set_ydata(height_drone_before)
+        
+        # self.plot_data[2].set_xdata(pot_temp_drone_after)
+        # self.plot_data[2].set_ydata(height_drone_after)
 
-        self.plot_data[2].set_xdata(pot_temp_drone_after)
-        self.plot_data[2].set_ydata(height_drone_after)
-
-        self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
-        self.plot_data[3].set_ydata(height_drone_after)
+        # self.plot_data[3].set_xdata(pot_dewpoint_temp_drone_after)
+        # self.plot_data[3].set_ydata(height_drone_after)
 
 
         xmin_cab = 1000
@@ -316,11 +315,16 @@ class GraphFrame(wx.Frame):
             xmin_cab = min(cabauw_potential_temperatures[h][-1], xmin_cab)
             xmax_cab = max(cabauw_potential_temperatures[h][-1], xmax_cab)
 
+        pot_temp_min = np.min(pot_temp_drone_after) if len(pot_temp_drone_after) > 0 else 0
+        pot_dewpoint_temp_min = np.min(pot_dewpoint_temp_drone_after) if len(pot_dewpoint_temp_drone_after) > 0 else 0
 
-        xmin = min(np.min(pot_temp_drone_after), np.min(pot_dewpoint_temp_drone_after))
-        xmax = max(np.max(pot_temp_drone_after), np.max(pot_dewpoint_temp_drone_after))
-        ymax = max(210, np.max(height_drone_after))
-        ymin = np.min(height_drone_after)
+        pot_temp_max = np.max(pot_temp_drone_after) if len(pot_temp_drone_after) > 0 else 0
+        pot_dewpoint_temp_max = np.max(pot_dewpoint_temp_drone_after) if len(pot_dewpoint_temp_drone_after) > 0 else 0
+
+        xmin = min(pot_temp_min, pot_dewpoint_temp_min)
+        xmax = max(pot_temp_max, pot_dewpoint_temp_max)
+        ymax = max(210, np.max(height_drone_after) if len(height_drone_after) > 0 else 0)
+        ymin = np.min(height_drone_after) if len(height_drone_after) > 0 else 0
         ydelta = 1
         xdelta = 0.25
         self.axes[0].set_xbound(lower=min(xmin_cab, xmin) - xdelta, upper=max(xmax_cab, xmax) + xdelta)
