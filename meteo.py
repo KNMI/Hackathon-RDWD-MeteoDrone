@@ -64,10 +64,11 @@ def calculate_height (air_pressure, temperature, rel_hum, initial_pressure):
 	potential_temperature = getTheta(kelvin_temp, air_pressure)
 	start_pressure = initial_pressure
 	start_height = 0
-	heights = []
+	heights = [0]
 	for i in range(len(potential_temperature) - 1):
-		heights.append(get_height(start_height, virtual_potential_temperature[i], start_pressure, virtual_potential_temperature[i + 1], air_pressure[i] + (1e-5 if air_pressure[i] == start_pressure else 0)))
+		h = get_height(start_height, virtual_potential_temperature[i], start_pressure, virtual_potential_temperature[i + 1], air_pressure[i] + (1e-5 if air_pressure[i] == start_pressure else 0))
+		heights.append(h)
 		start_height = heights[-1]
 		start_pressure = air_pressure[i]
 
-	return (heights, potential_temperature, qs, q)
+	return (heights[:len(potential_temperature)], potential_temperature, qs, q)

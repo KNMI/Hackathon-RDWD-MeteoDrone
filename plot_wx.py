@@ -20,7 +20,7 @@ import pytz
 import argparse
 
 
-REDRAW_TIMER_MS = 12000
+REDRAW_TIMER_MS = 1000
 basetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
 metadata_radio = json.loads(open('metadata_radio.json').read())['metadata']['columns']
 metadata_cabauw = json.loads(open('metadata_cab.json').read())['metadata']['columns']
@@ -236,8 +236,8 @@ class GraphFrame(wx.Frame):
         pot_dewpoint_temp_drone_before = pot_dewpoint_temp_drone[:self.demarcation_time_idx]
         pot_dewpoint_temp_drone_after = pot_dewpoint_temp_drone[self.demarcation_time_idx:]
 
-        # height_drone = self.data[0]['computed_height']
-        height_drone = self.data[0]['height']
+        height_drone = self.data[0]['computed_height']
+        # height_drone = self.data[0]['height']
         height_before = height_drone[:self.demarcation_time_idx]
         height_after = height_drone[self.demarcation_time_idx:]
 
@@ -313,8 +313,9 @@ class GraphFrame(wx.Frame):
         pot_dewpoint_temp_drone_before = pot_dewpoint_temp_drone[:self.demarcation_time_idx]
         pot_dewpoint_temp_drone_after = pot_dewpoint_temp_drone[self.demarcation_time_idx:]
 
-        # height_drone = self.data[0]['computed_height']
-        height_drone = self.data[0]['height']
+        height_drone = self.data[0]['computed_height']
+        # height_drone = self.data[0]['height']
+        print(height_drone)
         height_drone_before = height_drone[:self.demarcation_time_idx]
         height_drone_after = height_drone[self.demarcation_time_idx:]
 
