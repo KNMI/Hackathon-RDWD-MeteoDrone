@@ -70,5 +70,4 @@ def calculate_height (air_pressure, temperature, rel_hum, initial_pressure):
 		heights.append(h)
 		start_height = heights[-1]
 		start_pressure = air_pressure[i]
-
-	return (heights[:len(potential_temperature)], potential_temperature, qs, q)
+	return (heights, potential_temperature, qs, q)

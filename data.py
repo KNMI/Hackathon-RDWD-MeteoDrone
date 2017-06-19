@@ -275,8 +275,23 @@ def compute_dewpoint_temp(qt, pres):
 
 def process_drone_data(data, basetime, metadata, current_air_pressure, latest_time):
 	time, air_pressure, temperature, rel_hum, height = parse_radio_data(data, metadata, basetime, latest_time)
-	(computed_height, potential_temperature, qs, q) = calculate_height(air_pressure, temperature, rel_hum, current_air_pressure)
+	if len(air_pressure) == 0 or len(temperature) == 0 or len(rel_hum) == 0:
+		return {
+			'time': [],
+			'air_pressure': [],
+			'temperature': [],
+			'dew_point_temp': [],
+			'potential_dewpoint_temp': [],
+			'relative_humidity': [],
+			'height': [],
+			'potential_temperature': [],
+			'computed_height': [],
+			'qs': [],
+			'q': []
+		}
 
+
+	(computed_height, potential_temperature, qs, q) = calculate_height(air_pressure, temperature, rel_hum, current_air_pressure)
 	potential_temperature = list(map(lambda x: x - 273.15, potential_temperature))
 	computed_dew_temp = compute_dewpoint_temp(q, air_pressure)
 	potential_dewpoint_temperature = getTheta(computed_dew_temp, air_pressure)

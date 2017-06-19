@@ -314,8 +314,8 @@ class GraphFrame(wx.Frame):
         pot_dewpoint_temp_drone_after = pot_dewpoint_temp_drone[self.demarcation_time_idx:]
 
         height_drone = self.data[0]['computed_height']
+        
         # height_drone = self.data[0]['height']
-        print(height_drone)
         height_drone_before = height_drone[:self.demarcation_time_idx]
         height_drone_after = height_drone[self.demarcation_time_idx:]
 
