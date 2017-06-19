@@ -237,12 +237,18 @@ class GraphFrame(wx.Frame):
             
             self.plot_cabauw_data(cabauw_time, cabauw_potential_temperatures, 3),
             self.plot_cabauw_data(cabauw_time, cabauw_wind_speeds, 4),
-            self.plot_cabauw_data(cabauw_time, cabauw_mixing_ratios, 5)
+            self.plot_cabauw_data(cabauw_time, cabauw_mixing_ratios, 5),
+
+            self.plot_drone_data(cabauw_time, [8] * len(cabauw_time), 4, 'purple', symbol='--')
         ]
 
         xfmt = md.DateFormatter('%H:%M')
         for ax in self.axes[1:]:
             ax.xaxis.set_major_formatter(xfmt)
+
+        (lower, upper) = self.axes[4].get_ybound()
+        self.axes[4].set_ybound(lower, max(9, upper))
+
         self.axes[4].legend(['  10m', '  20m', '  40m', '  80m', '140m', '200m'], loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox=True, ncol=6)
 
     def update_cabauw_data(self, xdata, ydata, plot_idx, axes_idx, ydelta=0):
@@ -362,6 +368,10 @@ class GraphFrame(wx.Frame):
         self.update_cabauw_data(cabauw_time, cabauw_potential_temperatures, plot_idx=9, axes_idx=3, ydelta=1)
         self.update_cabauw_data(cabauw_time, cabauw_wind_speeds, plot_idx=10, axes_idx=4, ydelta=1)
         self.update_cabauw_data(cabauw_time, cabauw_mixing_ratios, plot_idx=11, axes_idx=5, ydelta=0.5)
+        self.plot_data[12].set_xdata(cabauw_time)
+        self.plot_data[12].set_ydata([8] * len(cabauw_time))
+        (lower, upper) = self.axes[4].get_ybound()
+        self.axes[4].set_ybound(lower, max(9, upper))
         self.canvas.draw()
 
     def on_pause_button(self, event):
