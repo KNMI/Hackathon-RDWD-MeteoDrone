@@ -349,6 +349,7 @@ class GraphFrame(wx.Frame):
             xmin_cab = min(cabauw_potential_temperatures[h][-1], xmin_cab)
             xmax_cab = max(cabauw_potential_dewpoint_temperatures[h][-1], xmax_cab)
             xmax_cab = max(cabauw_potential_temperatures[h][-1], xmax_cab)
+            i = i + 1
 
         pot_temp_min = np.min(pot_temp_drone_after) if len(pot_temp_drone_after) > 0 else 0
         pot_dewpoint_temp_min = np.min(pot_dewpoint_temp_drone_after) if len(pot_dewpoint_temp_drone_after) > 0 else 0
