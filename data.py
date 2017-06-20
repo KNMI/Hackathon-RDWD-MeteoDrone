@@ -41,11 +41,12 @@ def parse_radio_data(data, metadata, basetime):
 
 	for line in splitted:
 		t, pres, temp, rela_hum, h, lat, lon = line
-		time = np.append(time, np.array(int(t)))
-		air_pressure = np.append(air_pressure, np.array(float(pres)))
-		temperature = np.append(temperature, np.array(float(temp)))
-		rel_hum = np.append(rel_hum, np.array(float(rela_hum)))
-		height = np.append(height, np.array(int(h)))
+		if int(t) > 0:
+			time = np.append(time, np.array(int(t)))
+			air_pressure = np.append(air_pressure, np.array(float(pres)))
+			temperature = np.append(temperature, np.array(float(temp)))
+			rel_hum = np.append(rel_hum, np.array(float(rela_hum)))
+			height = np.append(height, np.array(int(h)))
 	
 	dirty_indices = filter_time(time)
 	time = np.delete(time, dirty_indices)

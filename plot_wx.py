@@ -307,6 +307,7 @@ class GraphFrame(wx.Frame):
             self.plot_data[4][i + 6].set_xdata(cabauw_potential_dewpoint_temperatures[h][-1])
             xmin_cab = min(cabauw_potential_temperatures[h][-1], xmin_cab)
             xmax_cab = max(cabauw_potential_temperatures[h][-1], xmax_cab)
+            i = i + 1
 
 
         xmin = min(safe_min(pot_temp_drone_after), safe_min(pot_dewpoint_temp_drone_after))
